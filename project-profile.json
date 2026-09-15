@@ -1,0 +1,11 @@
+{
+  "projectId": "ccdata_yf_03",
+  "projectName": "Voice Line",
+  "category": "未分类",
+  "businessDomain": "待补充",
+  "projectForm": "完整项目",
+  "codeScope": "frontend",
+  "languages": ["HTML", "CSS", "JavaScript"],
+  "summary": "Voice Line pronunciation practice demo with phrase search, difficulty filters, waveform display and local notes.",
+  "containerized": false
+}
