@@ -1,5 +1,623 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>声线 · 发音练习</title><style>
-:root{--bg:#f6f5f1;--ink:#1c2522;--muted:#77817c;--line:#dfe3dd;--green:#16866d;--mint:#d8f1e6;--red:#dd6257}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px Inter,system-ui,sans-serif}.app{max-width:1200px;margin:auto;padding:28px}.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}.brand{display:flex;align-items:center;gap:10px}.logo{width:38px;height:38px;border-radius:11px;background:var(--green);color:white;display:grid;place-items:center;font-size:20px}.brand h1{font-size:20px;margin:0}.brand small{color:var(--muted)}button,input{font:inherit}button{border:1px solid var(--line);border-radius:9px;background:#fff;padding:9px 13px;color:var(--ink);cursor:pointer}button:hover{border-color:var(--green);color:var(--green)}.primary{background:var(--green);color:white;border-color:var(--green);font-weight:700}.layout{display:grid;grid-template-columns:260px 1fr;gap:18px}.panel{background:#fff;border:1px solid var(--line);border-radius:14px;padding:17px}.panel h3{font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin:0 0 14px}.search{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;margin-bottom:14px}.phrase{padding:13px;border-radius:10px;margin:6px 0;cursor:pointer}.phrase.active{background:var(--mint);color:#0f6d58}.phrase small{display:block;color:var(--muted);margin-top:4px}.tag{font-size:11px;border-radius:99px;padding:3px 7px;background:#eef1ed;color:var(--muted);margin-right:4px}.filters{display:flex;gap:6px;flex-wrap:wrap}.filters button{font-size:12px;padding:6px 8px}.filters button.active{background:var(--ink);color:#fff}.content{min-width:0}.hero{background:#fff;border:1px solid var(--line);border-radius:14px;padding:27px}.crumb{color:var(--muted);font-size:12px;margin-bottom:18px}.hero h2{font-size:38px;letter-spacing:-.03em;margin:0 0 8px}.translation{color:var(--muted);font-size:16px}.chips{margin:17px 0}.practice{margin-top:18px;border-top:1px solid var(--line);padding-top:20px}.wave{height:100px;border-radius:9px;background:#f5f9f6;border:1px solid #e0ece6;display:flex;align-items:center;justify-content:center;gap:4px;padding:15px}.bar{width:4px;background:var(--green);border-radius:4px;opacity:.75}.controls{display:flex;gap:9px;align-items:center;margin-top:14px}.record{background:#fff0ed;color:var(--red);border-color:#f3c8c2}.recording{background:var(--red);color:#fff;border-color:var(--red)}.meta{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:20px}.stat{background:#f8faf8;border:1px solid var(--line);padding:12px;border-radius:9px}.stat small{display:block;color:var(--muted);margin-bottom:5px}.stat b{font-size:18px}.notes{margin-top:18px}.notes textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:10px;resize:vertical;min-height:72px}.status{color:var(--green);font-size:12px;min-height:18px;margin-top:10px}@media(max-width:750px){.app{padding:15px}.layout{grid-template-columns:1fr}.hero h2{font-size:30px}.meta{grid-template-columns:1fr 1fr}}
-</style></head><body><main class="app"><header class="top"><div class="brand"><div class="logo">◌</div><div><h1>声线</h1><small>把每句话说得更自然</small></div></div><button id="save">保存练习</button></header><section class="layout"><aside class="panel"><h3>我的短句 <span id="count">4</span></h3><input id="search" class="search" placeholder="搜索句子或标签…"><div id="list"></div><div class="divider" style="border-top:1px solid var(--line);margin:18px 0"></div><h3>难度筛选</h3><div class="filters"><button class="active" data-level="all">全部</button><button data-level="入门">入门</button><button data-level="进阶">进阶</button></div></aside><section class="content"><div class="hero"><div class="crumb">练习库 / 日常会话</div><h2 id="title">Could you say that again?</h2><div class="translation">你可以再说一遍吗？</div><div class="chips"><span class="tag">旅行</span><span class="tag">礼貌表达</span><span class="tag">进阶</span></div><div class="practice"><h3>跟读练习</h3><div class="wave" id="wave"></div><div class="controls"><button id="play" class="primary">▶ 播放示范</button><button id="record" class="record">● 开始录音</button><span style="color:var(--muted);font-size:12px" id="time">00:00</span><button id="again">↻ 再练一次</button></div><div class="status" id="status"></div></div><div class="meta"><div class="stat"><small>本句练习</small><b id="attempts">3 次</b></div><div class="stat"><small>最佳评分</small><b>86 / 100</b></div><div class="stat"><small>掌握度</small><b style="color:var(--green)">良好</b></div></div><div class="notes"><h3>练习笔记</h3><textarea id="notes" placeholder="记录发音难点或新的例句…"></textarea></div></div></section></section></main><script>
-const data=[{t:'Could you say that again?',cn:'你可以再说一遍吗？',l:'进阶',tags:['旅行','礼貌表达']},{t:'I’ll have the same, please.',cn:'请给我来一份一样的。',l:'入门',tags:['点餐']},{t:'Where is the nearest station?',cn:'最近的车站在哪里？',l:'入门',tags:['问路']},{t:'That sounds like a great idea.',cn:'听起来是个很棒的主意。',l:'进阶',tags:['日常'] }];let active=0,level='all',recording=false,start=0,timer;const list=document.querySelector('#list');function render(){let q=document.querySelector('#search').value.toLowerCase();list.innerHTML='';data.forEach((x,i)=>{if((level!=='all'&&x.l!==level)||!(x.t+x.tags.join()).toLowerCase().includes(q))return;let d=document.createElement('div');d.className='phrase '+(i===active?'active':'');d.innerHTML=x.t+'<small>'+x.l+' · '+x.tags.join(' / ')+'</small>';d.onclick=()=>{active=i;load()};list.append(d)});document.querySelector('#count').textContent=data.length}function load(){let x=data[active];document.querySelector('#title').textContent=x.t;document.querySelector('.translation').textContent=x.cn;document.querySelector('.chips').innerHTML=x.tags.map(t=>`<span class="tag">${t}</span>`).join('')+`<span class="tag">${x.l}</span>`;render();drawWave();document.querySelector('#status').textContent=''}function drawWave(){let w=document.querySelector('#wave');w.innerHTML=Array.from({length:62},(_,i)=>`<i class="bar" style="height:${12+Math.abs(Math.sin(i*.62))*54}px"></i>`).join('')}document.querySelector('#search').oninput=render;document.querySelectorAll('[data-level]').forEach(b=>b.onclick=()=>{level=b.dataset.level;document.querySelectorAll('[data-level]').forEach(x=>x.classList.remove('active'));b.classList.add('active');render()});document.querySelector('#play').onclick=()=>{document.querySelector('#status').textContent='正在播放示范音频…';setTimeout(()=>document.querySelector('#status').textContent='示范播放完成',1500)};document.querySelector('#record').onclick=()=>{recording=!recording;let b=document.querySelector('#record');b.classList.toggle('recording',recording);b.textContent=recording?'■ 停止录音':'● 开始录音';if(recording){start=Date.now();timer=setInterval(()=>document.querySelector('#time').textContent='00:'+String(Math.floor((Date.now()-start)/1000)).padStart(2,'0'),200)}else{clearInterval(timer);document.querySelector('#status').textContent='录音已保存，可以回放';document.querySelector('#play').textContent='▶ 回放我的录音'}};document.querySelector('#again').onclick=()=>{document.querySelector('#attempts').textContent=(4+Math.floor(Math.random()*2))+' 次';document.querySelector('#status').textContent='已开始新一轮练习'};document.querySelector('#save').onclick=()=>{localStorage.voiceNotes=document.querySelector('#notes').value;document.querySelector('#status').textContent='笔记已保存在本地'};document.querySelector('#notes').value=localStorage.voiceNotes||'';load();
-</script></body></html>
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>转写稿离线脱敏审校台</title>
+<style>
+:root{--bg:#f4f6f5;--ink:#1c2522;--muted:#76817c;--line:#dde2dd;--green:#16866d;--mint:#dcf2ea;--red:#d2554a;--amber:#b9770e;--blue:#2f6fed}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.6 "PingFang SC","Microsoft YaHei",Inter,system-ui,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+button{border:1px solid var(--line);border-radius:8px;background:#fff;padding:7px 12px;cursor:pointer}
+button:hover{border-color:var(--green);color:var(--green)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.primary{background:var(--green);color:#fff;border-color:var(--green);font-weight:700}
+button.danger{color:var(--red)}
+button.danger:hover{border-color:var(--red)}
+button.ghost{background:transparent}
+.app{max-width:1280px;margin:auto;padding:22px 26px 120px}
+header.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:11px}
+.logo{width:38px;height:38px;border-radius:11px;background:var(--green);color:#fff;display:grid;place-items:center;font-size:19px}
+.brand h1{font-size:19px;margin:0}
+.brand small{color:var(--muted)}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.badge{display:inline-block;font-size:12px;border-radius:99px;padding:2px 10px;border:1px solid var(--line);background:#fff;color:var(--muted)}
+.badge.ok{background:var(--mint);color:#0f6d58;border-color:#bfe3d6}
+.badge.bad{background:#fdecea;color:var(--red);border-color:#f3c8c2}
+.badge.warn{background:#fdf3e2;color:var(--amber);border-color:#eed9b0}
+.panel{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.panel h3{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 12px}
+.grid{display:grid;grid-template-columns:210px 1fr 300px;gap:16px;align-items:start}
+@media(max-width:1050px){.grid{grid-template-columns:1fr}.side-right{display:grid;grid-template-columns:1fr 1fr;gap:16px}}
+/* 导入区 */
+#importPanel textarea{width:100%;min-height:170px;border:1px solid var(--line);border-radius:10px;padding:12px;resize:vertical}
+.hint{color:var(--muted);font-size:12px;margin:8px 0 0}
+#importPanel .row{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
+/* 文稿列表 */
+.docitem{padding:10px 12px;border:1px solid transparent;border-radius:10px;cursor:pointer;margin-bottom:6px}
+.docitem:hover{background:#f6f8f7}
+.docitem.active{background:var(--mint);border-color:#bfe3d6}
+.docitem b{display:block;font-size:13px}
+.docitem small{color:var(--muted)}
+/* 正文标注 */
+.doc-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.doc-head h2{font-size:17px;margin:0}
+.transcript{white-space:pre-wrap;word-break:break-word;font-size:15px;line-height:2.1;cursor:text}
+.mk{border-radius:5px;padding:1px 2px;cursor:pointer;border-bottom:2px solid;position:relative}
+.mk.phone{background:#e4f5ef;border-bottom-color:#16866d}.mk.email{background:#e7f0fe;border-bottom-color:var(--blue)}
+.mk.idcard{background:#f1e9fe;border-bottom-color:#8a4fff}.mk.bankcard{background:#fdf0e0;border-bottom-color:#d97b17}
+.mk.address{background:#fce9f2;border-bottom-color:#c2418a}
+.mk.sel{outline:2px solid var(--ink);outline-offset:1px}
+.mk.flash{animation:flash 1.2s ease 2}
+@keyframes flash{50%{background:#ffe08a}}
+.code-tag{font-size:.72em;font-weight:700;margin-right:2px;opacity:.75;user-select:none;-webkit-user-select:none}
+.sub{margin-top:18px;border-top:1px dashed var(--line);padding-top:12px}
+.sub h4{margin:0 0 8px;font-size:13px;color:var(--muted)}
+.crow{display:flex;align-items:center;gap:8px;padding:7px 9px;border:1px solid var(--line);border-radius:9px;margin-bottom:6px;font-size:13px;flex-wrap:wrap}
+.crow .v{font-family:ui-monospace,Menlo,monospace;word-break:break-all}
+.crow .why{color:var(--muted);font-size:12px}
+.tagtype{font-size:11px;border-radius:99px;padding:1px 8px;color:#fff;flex:none}
+.tagtype.phone{background:#16866d}.tagtype.email{background:var(--blue}.tagtype.idcard{background:#8a4fff}
+.tagtype.bankcard{background:#d97b17}.tagtype.address{background:#c2418a}.tagtype.manual{background:#444}
+/* 浮层工具条 */
+.pop{position:absolute;z-index:30;background:#1c2522;color:#fff;border-radius:10px;padding:6px;display:none;box-shadow:0 8px 26px rgba(0,0,0,.22);font-size:12px}
+.pop button{background:transparent;color:#fff;border-color:#3a4742;padding:4px 9px;margin:2px}
+.pop button:hover{border-color:var(--green);color:#8fe0cb}
+.pop .sep{display:inline-block;width:1px;height:16px;background:#3a4742;vertical-align:middle;margin:0 4px}
+.editor{border:1px solid var(--ink);border-radius:10px;padding:10px;background:#fff}
+.editor .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px}
+/* 代号表 / 审计 */
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+td.v{font-family:ui-monospace,Menlo,monospace;word-break:break-all}
+.audit{max-height:340px;overflow:auto;font-size:12px}
+.audit .a{padding:6px 4px;border-bottom:1px solid var(--line)}
+.audit .a small{color:var(--muted)}
+.banner{border-radius:11px;padding:11px 15px;margin-bottom:14px;font-size:13px;display:none}
+.banner.show{display:block}
+.banner.conflict{background:#fdecea;border:1px solid #f3c8c2;color:#8c2f27}
+.banner.ok{background:var(--mint);border:1px solid #bfe3d6;color:#0f6d58}
+/* 底部确认条 */
+.confirmbar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:12px 26px;display:flex;align-items:center;justify-content:center;gap:14px;z-index:20;flex-wrap:wrap}
+.confirmbar .stats{color:var(--muted);font-size:13px}
+/* 预览 */
+.preview-doc{border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px;white-space:pre-wrap;word-break:break-word;line-height:2}
+.empty{text-align:center;color:var(--muted);padding:60px 20px;border:1px dashed var(--line);border-radius:14px;background:#fff}
+.toast{position:fixed;top:18px;left:50%;transform:translateX(-50%);background:#1c2522;color:#fff;padding:9px 18px;border-radius:99px;font-size:13px;z-index:50;display:none}
+small.mono{font-family:ui-monospace,Menlo,monscode,monospace}
+</style>
+</head>
+<body>
+<main class="app">
+  <header class="top">
+    <div class="brand">
+      <div class="logo">▤</div>
+      <div><h1>转写稿脱敏审校台</h1><small>离线运行 · 数据不出本机 · 不连接任何后端</small></div>
+    </div>
+    <div class="tools">
+      <span id="integrity" class="badge">审计未校验</span>
+      <button id="btnVerify">⇲ 校验审计</button>
+      <button id="btnUndo" title="撤销 (Ctrl+Z)">↶ 撤销</button>
+      <button id="btnRedo" title="重做 (Ctrl+Y)">↷ 重做</button>
+      <button id="btnNew" class="ghost danger">清空重开</button>
+    </div>
+  </header>
+
+  <section id="importPanel" class="panel" style="margin-bottom:16px">
+    <h3>① 粘贴转写稿（空行分隔多条；短首行作为文稿名且保留在正文中，也可写“标题：xxx”）</h3>
+    <textarea id="importText" placeholder="客服来电&#10;喂您好，我的手机号是 13800138000，邮箱 zhang.wei@example.com……&#10;&#10;回访记录&#10;第二条转写稿内容……"></textarea>
+    <div class="row">
+      <button class="primary" id="btnImport">导入并自动标引</button>
+      <button class="ghost" id="btnSample">填入示例</button>
+      <p class="hint">自动识别：手机号、邮箱、证件号（15/18 位）、银行卡（Luhn 校验）、地址。识别结果均可补标、取消、改判与调边界。</p>
+    </div>
+  </section>
+
+  <div id="bannerConflict" class="banner conflict"></div>
+
+  <div id="workspace" class="grid" style="display:none">
+    <aside class="panel">
+      <h3>文稿 <span id="docCount"></span></h3>
+      <div id="docList"></div>
+    </aside>
+
+    <section class="panel" id="docPanel">
+      <div class="doc-head">
+        <h2 id="docTitle"></h2>
+        <div>
+          <span id="docStats" class="badge"></span>
+        </div>
+      </div>
+      <div id="transcript" class="transcript"></div>
+      <p class="hint">在正文中划选文字可<b>补标</b>；点击高亮可<b>改判类型 / 调整边界 / 取消误标</b>。</p>
+
+      <div id="selectedEditor" class="sub" style="display:none"></div>
+
+      <div class="sub">
+        <h4 id="suppressedTitle">被压制 / 合并的候选</h4>
+        <div id="suppressedList"></div>
+      </div>
+      <div class="sub">
+        <h4>已取消（误标）</h4>
+        <div id="dismissedList"></div>
+      </div>
+    </section>
+
+    <aside class="side-right">
+      <div class="panel" style="margin-bottom:16px">
+        <h3>代号登记本</h3>
+        <div id="codeTable"></div>
+        <p class="hint">同值同号、异值不撞号；序号只增不复用。确认时正式登记。</p>
+      </div>
+      <div class="panel">
+        <h3>审计记录 <span id="auditCount"></span></h3>
+        <div id="auditBox" class="audit"></div>
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button id="btnExportAudit" class="ghost">导出审计链</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div id="emptyState" class="empty">
+    暂无文稿。粘贴多条转写稿后点击「导入并自动标引」开始审校。<br>
+    所有数据仅保存在本浏览器 localStorage，刷新不丢失；审计链可发现任何越权改动。
+  </div>
+
+  <div id="preview" style="display:none;margin-top:18px"></div>
+</main>
+
+<div class="confirmbar" id="confirmBar" style="display:none">
+  <span class="stats" id="confirmStats"></span>
+  <button class="primary" id="btnConfirm">② 确认脱敏并预览</button>
+</div>
+
+<div class="pop" id="popType"></div>
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+<script>
+(function () {
+  'use strict';
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const LS_KEY = 'desensitize_console_v1';
+  const ACTION_CN = {
+    import: '导入文稿', 'add-mark': '补标', 'remove-mark': '删除补标', retype: '改判类型', resize: '调整边界',
+    'dismiss-mark': '取消误标', undo: '撤销', redo: '重做', confirm: '确认脱敏', reopen: '返回修改', verify: '校验审计',
+  };
+
+  let state = DT.newState();
+  let currentDocId = null;
+  let selectedMarkId = null;
+  let selRange = null; // {start,end} 划选（相对正文）
+  let undoStack = [], redoStack = [];
+  let confirmedPlan = null; // 确认后的 {assignment, built, export}
+
+  /* ---------------- 持久化 ---------------- */
+  function save() { localStorage.setItem(LS_KEY, JSON.stringify({ state, undoLen: undoStack.length, redoLen: redoStack.length })); }
+  function load() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(LS_KEY));
+      if (raw && raw.state) { state = raw.state; return true; }
+    } catch (e) { /* 损坏数据按空态处理，审计校验会另行提示 */ }
+    return false;
+  }
+
+  /* ---------------- 操作执行（全部写审计） ---------------- */
+  async function runParts(parts, action, detail) {
+    if (state.confirmed) { state.confirmed = false; confirmedPlan = null; await DT.appendAudit(state, 'reopen', { auto: true }); }
+    const inverses = [];
+    parts.forEach(p => inverses.unshift(DT.applyOp(state, p)));
+    await DT.appendAudit(state, action, Object.assign({ ops: parts.length }, detail || {}));
+    undoStack.push({ label: action, undo: inverses, redo: parts });
+    redoStack = [];
+    afterChange();
+  }
+  async function runPatch(patch, action, detail) { return runParts([patch], action, detail); }
+  async function runCustom(doFn, undoFn, label, detail) {
+    doFn();
+    await DT.appendAudit(state, label, detail || null);
+    undoStack.push({ label, custom: { undo: undoFn, redo: doFn } });
+    redoStack = [];
+    afterChange();
+  }
+  async function undo() {
+    const e = undoStack.pop();
+    if (!e) return;
+    if (e.custom) e.custom.undo();
+    else e.undo.forEach(p => DT.applyOp(state, p));
+    await DT.appendAudit(state, 'undo', { of: e.label });
+    redoStack.push(e);
+    selectedMarkId = null;
+    afterChange();
+  }
+  async function redo() {
+    const e = redoStack.pop();
+    if (!e) return;
+    if (e.custom) e.custom.redo();
+    else e.redo.forEach(p => DT.applyOp(state, p));
+    await DT.appendAudit(state, 'redo', { of: e.label });
+    undoStack.push(e);
+    afterChange();
+  }
+  async function afterChange() {
+    confirmedPlan = null;
+    $('#preview').style.display = 'none';
+    save();
+    render();
+    const v = await DT.verifyAudit(state);
+    paintIntegrity(v);
+  }
+
+  /* ---------------- 派生数据 ---------------- */
+  const resAll = () => DT.allResolution(state);
+  const plan = () => {
+    const m = {};
+    const res = resAll();
+    Object.entries(res).forEach(([id, r]) => { m[id] = r.active; });
+    return { res, pc: DT.planCodes(state.registry, state.docs, m), activeByDoc: m };
+  };
+  const currentDoc = () => state.docs.find(d => d.id === currentDocId);
+
+  /* ---------------- 渲染 ---------------- */
+  function paintIntegrity(v) {
+    const el = $('#integrity');
+    if (!state.audit.length) { el.textContent = '审计未校验'; el.className = 'badge'; return; }
+    if (v.ok) { el.textContent = '✓ 审计链完整 (' + state.audit.length + ')'; el.className = 'badge ok'; }
+    else { el.textContent = '✗ 审计异常：' + v.problems[0]; el.className = 'badge bad'; el.title = v.problems.join('\n'); }
+  }
+
+  function render() {
+    const hasDocs = state.docs.length > 0;
+    $('#emptyState').style.display = hasDocs ? 'none' : 'block';
+    $('#workspace').style.display = hasDocs ? 'grid' : 'none';
+    $('#confirmBar').style.display = hasDocs ? 'flex' : 'none';
+    $('#btnUndo').disabled = !undoStack.length || state.confirmed;
+    $('#btnRedo').disabled = !redoStack.length || state.confirmed;
+    if (!hasDocs) return;
+    if (!currentDoc() && state.docs.length) currentDocId = state.docs[0].id;
+
+    const { res, pc, activeByDoc } = plan();
+    // 冲突横幅
+    const b = $('#bannerConflict');
+    if (pc.conflicts.length) {
+      b.className = 'banner conflict show';
+      b.innerHTML = '⚠ 检测到 <b>' + pc.conflicts.length + '</b> 组“相同原文、不同含义”冲突，确认前必须处理：<br>' +
+        pc.conflicts.map(c => '原文 <span class="v">' + esc(c.norm.slice(0, 24)) + '</span> 被标为 ' +
+          c.types.map(t => '<span class="tagtype ' + t + '">' + DT.META[t].label + '</span>').join(' / ') +
+          '（已分配候选代号 ' + c.codes.join('、') + '）；相关片段在解决前不会脱敏。').join('<br>');
+    } else { b.className = 'banner conflict'; b.innerHTML = ''; }
+
+    renderDocList(res, pc);
+    renderDoc(res, pc);
+    renderCodes(pc);
+    renderAudit();
+    const totalMarks = Object.values(activeByDoc).reduce((n, a) => n + a.length, 0);
+    const totalSup = Object.values(res).reduce((n, r) => n + r.suppressed.length, 0);
+    $('#confirmStats').innerHTML = '共 ' + state.docs.length + ' 篇 · 生效标引 <b>' + totalMarks + '</b> 处 · 压制 ' + totalSup +
+      ' 处 · 代号 ' + new Set(Object.values(pc.assignment)).size + ' 个' +
+      (pc.conflicts.length ? ' · <b style="color:var(--red)">' + pc.conflicts.length + ' 组冲突待处理</b>' : '');
+    $('#btnConfirm').disabled = !!pc.conflicts.length || state.confirmed;
+    $('#btnConfirm').textContent = state.confirmed ? '已确认（预览见下方）' : '② 确认脱敏并预览';
+  }
+
+  function renderDocList(res, pc) {
+    $('#docCount').textContent = state.docs.length;
+    $('#docList').innerHTML = state.docs.map(d => {
+      const n = res[d.id].active.length;
+      const cf = pc.conflicts.some(c => c.markIds.some(id => res[d.id].active.some(m => m.id === id)));
+      return '<div class="docitem ' + (d.id === currentDocId ? 'active' : '') + '" data-id="' + d.id + '">' +
+        '<b>' + esc(d.name) + (cf ? ' <span class="badge warn">冲突</span>' : '') + '</b>' +
+        '<small>' + n + ' 处标引 · ' + res[d.id].suppressed.length + ' 压制</small></div>';
+    }).join('');
+    document.querySelectorAll('.docitem').forEach(el => el.onclick = () => { currentDocId = el.dataset.id; selectedMarkId = null; hidePop(); render(); });
+  }
+
+  function renderDoc(res, pc) {
+    const d = currentDoc();
+    if (!d) return;
+    $('#docTitle').textContent = d.name;
+    const r = res[d.id];
+    $('#docStats').textContent = r.active.length + ' 生效 / ' + r.suppressed.length + ' 压制 / ' +
+      state.marks.filter(m => m.docId === d.id && m.status === 'dismissed').length + ' 取消';
+
+    // 正文高亮
+    let html = '', last = 0;
+    r.active.forEach(m => {
+      html += esc(d.text.slice(last, m.start));
+      const code = pc.assignment[m.id] ? '<span class="code-tag">' + pc.assignment[m.id] + '</span>' : '';
+      html += '<mark class="mk ' + m.type + (m.id === selectedMarkId ? ' sel' : '') + '" data-id="' + m.id + '">' +
+        code + esc(d.text.slice(m.start, m.end)) + '</mark>';
+      last = m.end;
+    });
+    html += esc(d.text.slice(last));
+    $('#transcript').innerHTML = html;
+    $('#transcript').querySelectorAll('.mk').forEach(el => el.onclick = ev => { ev.stopPropagation(); selectMark(el.dataset.id); });
+
+    renderEditor(r, pc);
+    renderSuppressed(r);
+    renderDismissed(d);
+  }
+
+  function renderEditor(r, pc) {
+    const box = $('#selectedEditor');
+    if (!selectedMarkId) { box.style.display = 'none'; box.innerHTML = ''; return; }
+    const m = r.active.find(x => x.id === selectedMarkId);
+    if (!m) { // 可能选中的是未生效标记
+      const raw = state.marks.find(x => x.id === selectedMarkId);
+      box.style.display = 'block';
+      box.innerHTML = raw ? '<h4>该标记当前未生效（' + (raw.status === 'dismissed' ? '已取消' : '被压制') + '）</h4>' : '';
+      return;
+    }
+    const d = currentDoc();
+    box.style.display = 'block';
+    box.innerHTML =
+      '<h4>标引审校' + (m.origin === 'manual' ? ' <span class="tagtype manual">人工补标</span>' : '') + '</h4>' +
+      '<div class="crow"><span class="tagtype ' + m.type + '">' + DT.META[m.type].label + '</span>' +
+      '<b>候选代号 ' + (pc.assignment[m.id] || '—') + '</b><span class="v">' + esc(m.value) + '</span></div>' +
+      '<div class="row"><label>改判类型</label><select id="edType">' +
+        DT.TYPES.map(t => '<option value="' + t + '"' + (t === m.type ? ' selected' : '') + '>' + DT.META[t].label + '</option>').join('') +
+      '</select></div>' +
+      '<div class="row"><label>边界</label>' +
+        '<button data-rb="s-">起点 −1</button><button data-rb="s+">起点 +1</button>' +
+        '<button data-rb="e-">终点 −1</button><button data-rb="e+">终点 +1</button>' +
+        '<small class="mono">[' + m.start + ',' + m.end + ') 共 ' + (m.end - m.start) + ' 字</small></div>' +
+      '<div class="row">' +
+        (m.origin === 'manual'
+          ? '<button class="danger" id="edDelete">彻底删除该补标</button>'
+          : '<button class="danger" id="edDismiss">取消误标（不参与脱敏）</button>') +
+        '<button class="ghost" id="edClose">完成</button></div>';
+
+    $('#edType').onchange = e => runPatch({ op: 'retype', id: m.id, type: e.target.value }, 'retype', { to: e.target.value });
+    box.querySelectorAll('[data-rb]').forEach(btn => btn.onclick = () => {
+      let s = m.start, en = m.end;
+      if (btn.dataset.rb === 's-') s--; else if (btn.dataset.rb === 's+') s++;
+      else if (btn.dataset.rb === 'e-') en--; else en++;
+      if (s < 0 || en > d.text.length || s >= en) { toast('边界超出正文范围'); return; }
+      runPatch({ op: 'resize', id: m.id, start: s, end: en, value: d.text.slice(s, en) }, 'resize');
+    });
+    if ($('#edDismiss')) $('#edDismiss').onclick = () => runPatch({ op: 'setStatus', id: m.id, status: 'dismissed' }, 'dismiss-mark').then(() => { selectedMarkId = null; });
+    if ($('#edDelete')) $('#edDelete').onclick = () => runPatch({ op: 'removeMark', id: m.id }, 'remove-mark').then(() => { selectedMarkId = null; });
+    $('#edClose').onclick = () => { selectedMarkId = null; hidePop(); render(); };
+  }
+
+  function reasonText(s) {
+    if (DT.REASON_TEXT[s.reason]) return DT.REASON_TEXT[s.reason];
+    return s.reason;
+  }
+  function renderSuppressed(r) {
+    const box = $('#suppressedList');
+    $('#suppressedTitle').textContent = '被压制 / 合并的候选（' + r.suppressed.length + '）';
+    if (!r.suppressed.length) { box.innerHTML = '<p class="hint">无。重叠、嵌套、相邻命中按固定优先级：证件号 &gt; 银行卡 &gt; 手机号 &gt; 邮箱 &gt; 地址。</p>'; return; }
+    box.innerHTML = r.suppressed.map(s =>
+      '<div class="crow" data-sid="' + s.id + '">' +
+        '<span class="tagtype ' + s.type + '">' + DT.META[s.type].label + '</span>' +
+        (s.origin === 'manual' ? '<span class="tagtype manual">补标</span>' : '') +
+        '<span class="v">' + esc(s.value) + '</span>' +
+        '<span class="why">' + reasonText(s) + ' → 胜出：' + DT.META[s.winnerType].label + '</span>' +
+        '<button data-adopt="' + s.id + '">改采用此候选</button>' +
+      '</div>').join('');
+    box.querySelectorAll('[data-adopt]').forEach(btn => btn.onclick = () => {
+      const s = r.suppressed.find(x => x.id === btn.dataset.adopt);
+      const winner = r.active.find(a => a.id === s.winnerId);
+      if (!winner) { toast('胜出标记已不存在'); return; }
+      runPatch({ op: 'setStatus', id: winner.id, status: 'dismissed' }, 'dismiss-mark', { promote: s.type });
+    });
+  }
+  function renderDismissed(d) {
+    const box = $('#dismissedList');
+    const list = state.marks.filter(m => m.docId === d.id && m.status === 'dismissed');
+    if (!list.length) { box.innerHTML = '<p class="hint">无。</p>'; return; }
+    box.innerHTML = list.map(m =>
+      '<div class="crow"><span class="tagtype ' + m.type + '">' + DT.META[m.type].label + '</span>' +
+      '<span class="v">' + esc(m.value) + '</span>' +
+      (m.origin === 'manual' ? '<button data-del="' + m.id + '" class="danger">删除</button>' : '') +
+      '<button data-restore="' + m.id + '">恢复标引</button></div>').join('');
+    box.querySelectorAll('[data-restore]').forEach(b => b.onclick = () => {
+      const mm = state.marks.find(x => x.id === b.dataset.restore);
+      runPatch({ op: 'setStatus', id: mm.id, status: 'active' }, 'dismiss-mark', { restored: true });
+    });
+    box.querySelectorAll('[data-del]').forEach(b => b.onclick = () => runPatch({ op: 'removeMark', id: b.dataset.del }, 'remove-mark'));
+  }
+
+  function renderCodes(pc) {
+    const byCode = {};
+    const { res } = { res: resAll() };
+    state.docs.forEach(d => {
+      res[d.id].active.forEach(m => {
+        const code = pc.assignment[m.id];
+        if (!code) return;
+        (byCode[code] = byCode[code] || { type: m.type, norm: DT.normalizeValue(m.type, m.value), docs: new Set() }).docs.add(d.name);
+      });
+    });
+    const rows = Object.entries(byCode).sort((a, b) => a[0] < b[0] ? -1 : 1);
+    $('#codeTable').innerHTML = rows.length ? '<table><tr><th>代号</th><th>类型</th><th>规范化值</th><th>出现于</th></tr>' +
+      rows.map(([code, v]) => '<tr><td><b>' + code + '</b></td><td>' + DT.META[v.type].label +
+        '</td><td class="v">' + esc(v.norm.slice(0, 22)) + '</td><td>' + [...v.docs].map(esc).join('<br>') + '</td></tr>').join('') + '</table>'
+      : '<p class="hint">尚无标引。</p>';
+  }
+
+  function renderAudit() {
+    $('#auditCount').textContent = state.audit.length;
+    $('#auditBox').innerHTML = state.audit.slice().reverse().map(e =>
+      '<div class="a"><small>#' + e.seq + ' ' + new Date(e.ts).toLocaleTimeString() + '</small><br><b>' +
+      (ACTION_CN[e.action] || e.action) + '</b>' +
+      (e.detail && e.detail.of ? ' <small>(' + (ACTION_CN[e.detail.of] || e.detail.of) + ')</small>' : '') +
+      '<br><small class="mono">' + e.hash.slice(0, 12) + '…</small></div>').join('');
+  }
+
+  /* ---------------- 划选补标浮层 ---------------- */
+  const pop = $('#popType');
+  function hidePop() { pop.style.display = 'none'; selRange = null; }
+  function textOffset(node, offset) {
+    const root = $('#transcript');
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    let n, total = 0;
+    while ((n = walker.nextNode())) {
+      // 代号标签（.code-tag）不属于原文，不计入偏移
+      if (n.parentElement && n.parentElement.classList && n.parentElement.classList.contains('code-tag')) continue;
+      if (n === node) return total + offset;
+      total += n.textContent.length;
+    }
+    return total;
+  }
+  $('#transcript').addEventListener('mouseup', ev => {
+    const sel = window.getSelection();
+    if (!sel.rangeCount || sel.isCollapsed) return;
+    const range = sel.getRangeAt(0);
+    if (!$('#transcript').contains(range.commonAncestorContainer)) return;
+    const s = textOffset(range.startContainer, range.startOffset);
+    const e = textOffset(range.endContainer, range.endOffset);
+    const d = currentDoc();
+    if (!d || e <= s || e > d.text.length) return;
+    selRange = { start: s, end: e };
+    pop.innerHTML = '补标为：' + DT.TYPES.map(t =>
+      '<button data-t="' + t + '"><span class="tagtype ' + t + '">' + DT.META[t].label + '</span></button>').join('') +
+      '<span class="sep"></span><button data-close="1">取消</button>';
+    pop.style.left = Math.min(ev.pageX, window.innerWidth - 320) + 'px';
+    pop.style.top = (ev.pageY - 48) + 'px';
+    pop.style.display = 'block';
+    pop.querySelectorAll('[data-t]').forEach(b => b.onclick = () => {
+      const t = b.dataset.t;
+      runPatch({
+        op: 'addMark', id: DT.uid('m_'), docId: d.id, type: t,
+        start: selRange.start, end: selRange.end, value: d.text.slice(selRange.start, selRange.end), origin: 'manual',
+      }, 'add-mark', { to: t }).then(() => hidePop());
+    });
+    pop.querySelector('[data-close]').onclick = hidePop;
+  });
+  // 用 mousedown 判定“点到浮层外”：浮层在 mouseup 时才弹出，
+  // 这样同一次划选的收尾点击不会立刻把它关掉
+  document.addEventListener('mousedown', e => { if (pop.style.display === 'block' && !pop.contains(e.target)) hidePop(); });
+
+  function selectMark(id) {
+    selectedMarkId = id;
+    hidePop();
+    render();
+    document.querySelector('.mk.sel')?.scrollIntoView?.({ block: 'nearest' });
+  }
+
+  /* ---------------- 导入 / 样例 ---------------- */
+  $('#btnImport').onclick = async () => {
+    const raw = $('#importText').value.trim();
+    if (!raw) { toast('请先粘贴转写稿'); return; }
+    const blocks = DT.splitTranscripts(raw);
+    const parts = DT.importPatches(blocks);
+    await runParts(parts, 'import', { names: blocks.map(b => b.name), auto: parts.reduce((n, p) => n + p.marks.length, 0) });
+    $('#importText').value = '';
+    currentDocId = parts.length ? state.docs[state.docs.length - parts.length].id : currentDocId;
+    toast('已导入 ' + blocks.length + ' 篇，自动标引 ' + parts.reduce((n, p) => n + p.marks.length, 0) + ' 处');
+  };
+  $('#btnSample').onclick = () => {
+    $('#importText').value =
+'客服来电\n' +
+'喂您好，我的联系号码是13800138000，邮箱zhang.wei@example.com。\n' +
+'我住在北京市海淀区中关村南大街27号院3号楼1502室，身份证号是11010519900307123X。\n' +
+'刚才说的工资卡号是6213006-13800138000，订单号是901234567890123，别搞错了。\n\n' +
+'回访记录\n' +
+'再确认一下，备用号码还是13800138000对吧？另一个号是13911112222。\n' +
+'对了系统里那个编号11010519900307123X你再核一下，有事发我邮箱ZHANG.WEI@example.com。';
+  };
+
+  /* ---------------- 确认 / 预览 / 导出 ---------------- */
+  $('#btnConfirm').onclick = async () => {
+    const { res, pc, activeByDoc } = plan();
+    if (pc.conflicts.length) { toast('存在含义冲突，无法确认'); return; }
+    DT.commitCodes(state.registry, pc.planRegistry);
+    const built = DT.buildMasked(state.docs, activeByDoc, pc.assignment);
+    confirmedPlan = { assignment: pc.assignment, built };
+    await runCustom(() => { state.confirmed = true; }, () => { state.confirmed = false; }, 'confirm',
+      { docs: state.docs.length, codes: Object.keys(state.registry.keys).length });
+    renderPreview(pc, built, res);
+  };
+  function renderPreview(pc, built, res) {
+    // 自检：映射恢复必须逐字还原
+    let checkOk = true, bad = '';
+    for (const d of state.docs) {
+      try { if (DT.recoverDoc(built[d.id].masked, built[d.id].occurrences) !== d.text) { checkOk = false; bad = d.name; } }
+      catch (e) { checkOk = false; bad = d.name + '：' + e.message; }
+    }
+    const exp = DT.mappingExport(state.docs, plan().activeByDoc, pc.assignment);
+    window.__lastExport = exp;
+    $('#preview').style.display = 'block';
+    $('#preview').innerHTML =
+      '<div class="panel"><h3>③ 脱敏预览</h3>' +
+      '<p><span class="badge ' + (checkOk ? 'ok' : 'bad') + '">' +
+        (checkOk ? '✓ 映射自检通过：每篇文稿均可由映射清单逐字恢复原文' : '✗ 映射自检失败：' + esc(bad)) + '</span></p>' +
+      state.docs.map(d => '<h4>' + esc(d.name) + '</h4><div class="preview-doc">' + esc(built[d.id].masked) + '</div>').join('') +
+      '<div class="row" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">' +
+        '<button class="primary" id="exMasked">⬇ 导出脱敏文本 (.txt)</button>' +
+        '<button id="exMap">⬇ 导出恢复映射清单 (.json)</button>' +
+        '<button id="exAudit2">⬇ 导出审计链 (.json)</button>' +
+        '<button id="btnReopen" class="ghost">返回继续修改</button>' +
+      '</div><p class="hint">映射清单可恢复原文，务必与脱敏稿分开保管；其改动会在恢复自检时暴露。</p></div>';
+    $('#exMasked').onclick = () => download('masked.txt',
+      state.docs.map(d => '## ' + d.name + '\n' + built[d.id].masked).join('\n\n'), 'text/plain');
+    $('#exMap').onclick = () => download('recovery-mapping.json', JSON.stringify(exp, null, 2), 'application/json');
+    $('#exAudit2').onclick = exportAudit;
+    $('#btnReopen').onclick = async () => {
+      await runCustom(() => { state.confirmed = false; confirmedPlan = null; }, () => { state.confirmed = true; }, 'reopen');
+      $('#preview').style.display = 'none';
+    };
+    $('#preview').scrollIntoView?.({ behavior: 'smooth' });
+  }
+
+  function download(name, content, mime) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([content], { type: mime || 'text/plain' }));
+    a.download = name; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }
+  function exportAudit() {
+    download('audit-chain.json', JSON.stringify({
+      exportedAt: new Date().toISOString(),
+      chain: state.audit, registry: state.registry,
+      docCount: state.docs.length, confirmed: state.confirmed,
+    }, null, 2), 'application/json');
+  }
+  $('#btnExportAudit').onclick = exportAudit;
+
+  /* ---------------- 校验 / 撤销重做 / 清空 ---------------- */
+  $('#btnVerify').onclick = async () => {
+    const v = await DT.verifyAudit(state);
+    paintIntegrity(v);
+    toast(v.ok ? '审计链校验通过，共 ' + state.audit.length + ' 条' : '发现异常：' + v.problems.join('；'));
+  };
+  $('#btnUndo').onclick = undo;
+  $('#btnRedo').onclick = redo;
+  $('#btnNew').onclick = () => {
+    if (!confirm('清空当前全部文稿、标记与审计记录？此操作不可恢复（但本身会被新会话记录替代）。')) return;
+    localStorage.removeItem(LS_KEY);
+    location.reload();
+  };
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); }
+  });
+
+  let toastTimer;
+  function toast(msg) {
+    const t = $('#toast'); t.textContent = msg; t.style.display = 'block';
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.style.display = 'none'; }, 2400);
+  }
+
+  /* ---------------- 启动 ---------------- */
+  (async function init() {
+    if (load()) {
+      render();
+      const v = await DT.verifyAudit(state);
+      paintIntegrity(v);
+      if (!v.ok) toast('检测到数据或审计记录被改动：' + v.problems[0]);
+    } else {
+      render();
+      paintIntegrity({ ok: false, problems: [] });
+    }
+  })();
+})();
+</script>
+</body>
+</html>
